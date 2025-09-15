@@ -1,0 +1,49 @@
+def get_info_table_sql(table_name: str) -> str:
+    return f"""
+    CREATE TABLE IF NOT EXISTS {table_name} (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        account TEXT NOT NULL UNIQUE,
+        balance REAL NOT NULL,
+        points INTEGER NOT NULL,
+        volume REAL NOT NULL,
+        margin_fee REAL NOT NULL,
+        margin_bonus REAL NOT NULL,
+        api_key TEXT,
+        api_secret TEXT,
+        captcha_api TEXT,
+        email TEXT NOT NULL,
+        password TEXT NOT NULL,
+        cookies TEXT,
+        proxy TEXT
+    )
+    """
+
+def get_insert_or_update_sql(table_name: str) -> str:
+    return f"""
+    INSERT INTO {table_name} 
+        (account, balance, points, volume, margin_fee,margin_bonus, api_key, api_secret, captcha_api, email, password, cookies, proxy)
+    VALUES 
+        (:account, :balance, :points, :volume, :margin_fee, :margin_bonus, :api_key, :api_secret, :captcha_api, :email, :password, :cookies, :proxy)
+    ON CONFLICT(account) DO UPDATE SET
+        balance = excluded.balance,
+        points = excluded.points,
+        volume = excluded.volume,
+        margin_fee = excluded.margin_fee,
+        margin_bonus = excluded.margin_bonus,
+        api_key = excluded.api_key,
+        api_secret = excluded.api_secret,
+        captcha_api = excluded.captcha_api,
+        email = excluded.email,
+        password = excluded.password,
+        cookies = excluded.cookies,
+        proxy = excluded.proxy
+    """
+
+def get_select_all_sql(table_name: str) -> str:
+    return f"SELECT * FROM {table_name}"
+
+def get_clear_table_sql(table_name: str) -> str:
+    return f"DELETE FROM {table_name}"
+
+def get_select_by_account_sql(table_name: str) -> str:
+    return f"SELECT * FROM {table_name} WHERE account = :account"
