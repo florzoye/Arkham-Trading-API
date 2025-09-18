@@ -247,9 +247,9 @@ async def main_menu(account: Account):
 
                 case "💹 Торговые операции":
                     await trading_menu(current_account)
+
                 case "📊 Информация об аккаунте":
                     await show_basic_account_info(current_account)
-
                 case "❌ Выход":
                     return
 
@@ -358,18 +358,18 @@ async def trading_menu(account: Account):
         choice = await inquirer.select(
             message='Выберите тип торговли',
             choices=[
-                'Futures trading',
-                'Spot trading',
+                '👛 Futures trading',
+                '🎒 Spot trading',
                 '⬅️ Выйти',
             ],
             default='Futures trading'
         ).execute_async()
 
         match choice:
-            case 'Futures trading':
+            case '👛 Futures trading':
                 await futures_menu(account)
 
-            case 'Spot trading':
+            case '🎒 Spot trading':
                 await spot_menu(account)
 
             case '⬅️ Выйти':

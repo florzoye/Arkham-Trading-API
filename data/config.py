@@ -16,8 +16,9 @@ NUMBER_ATTEMPTS_REQUESTS = 10 # можно не трогать
 # =========================
 #  Points
 # =========================
-SPOT_FEE = 0.001  
-FUTURES_FEE = 0.0005  
+SPOT_FEE = 0.001   #одинаково 
+FUTURES_FEE_TAKER = 0.0005  # тейкер (маркет)
+FUTURES_FEE_MAKER = 0.00025
     
 SPOT_POINTS_TIERS = [
     {'tier': 1, 'volume': 100000, 'points': 200},
