@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import signal
+import random
 import asyncio
 from typing import Optional
 
@@ -504,6 +505,55 @@ async def positions_and_balances_menu(account: Account):
     except Exception as e:
         console.print(f"[red]❌ Ошибка в меню позиций: {e}[/red]")
         await asyncio.sleep(2)
+    
+async def trading_dialog_window(account: Account):
+    while True:
+        choice = await inquirer.select(
+            choices=[
+                "Открыть одну сделку",
+                "Открыть несколько сделок",
+                "⬅️ Выйти",
+            ],
+                default="Открыть одну сделку"
+        ).execute_async()
+
+        match choice:
+            case "Открыть одну сделку":
+                await open_position(account)
+
+            case "Открыть несколько сделок":
+                await dialog_window(account)
+
+            case "📉 Продать монету":
+                await spot_sell_coin(account)
+
+            case "⬅️ Выйти":
+                break
+
+async def dialog_window(account: Account):
+    try:
+        while True:
+            choice = await inquirer.select(
+                message='Как отсчитывать сделки?',
+                choices=[
+                    "По строгому количеству (задаете сами)",
+                    "По остатку баланса (торгуется до заданого)",
+                    "⬅️ Выйти",
+                ],
+                    default="По строгому количеству (задаете сами)"
+            ).execute_async()
+
+            match choice:
+                case "По строгому количеству (задаете сами)":
+                    await multiple_orders(account)
+                case "По остатку баланса (торгуется до заданого)":
+                    await remains_balance_orders(account)
+                case "⬅️ Выйти":
+                    break
+    except Exception as e:
+        raise ValueError(e)
+
+    
 
 async def open_position(account: Account, side: str):
     coin = str(await inquirer.text(message="Введите монету (например BTC):").execute_async())
