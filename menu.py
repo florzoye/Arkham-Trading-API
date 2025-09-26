@@ -1167,7 +1167,7 @@ async def save_account_to_db(
     try:
         trade_table = TradeSQL(db)
         account_data = account.model_dump(
-            exclude={"arkham_info", "arkham_login", "arkam_price", "arkham_trader", "session", "_session_manager"}
+            exclude={"arkham_info", "arkham_login", "arkham_price", "arkham_trader", "session", "_session_manager"}
         )
         
         if account_data.get('cookies'):
