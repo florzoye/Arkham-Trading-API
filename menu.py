@@ -628,6 +628,97 @@ async def multiple_orders(account: Account):
         console.print(f"[red]❌ Критическая ошибка: {str(e)}[/red]")
         raise
 
+async def remains_balance_orders(account: Account):
+    try:
+        console.print('[red]Торговая пара, направление и время сделки будут выбираться рандомно![/red]')
+
+        percent = await inquirer.number(
+            message="Какой процент от депозита использовать?",
+        ).execute_async()
+
+        leverage_raw = await inquirer.number(
+            message="Какое плечо использовать (1-20)?",
+        ).execute_async()
+
+        point_balance = await inquirer.number(
+            message="Сколько депозита оставить? (например: 50)",
+        ).execute_async()
+
+        successful_orders = 0
+        while True:
+            try:
+                await account.update_data()
+                total_balance = account.balance + account.margin_fee
+
+                if total_balance <= point_balance:
+                    console.print(f"[yellow]Баланс достиг порога {point_balance}, останавливаем торговлю[/yellow]")
+                    break
+
+                delay = random.randint(5, 35)
+                side = random.choice(['short', 'long'])
+                coin = random.choice(config.TOKENS_LIST)
+
+                price_data = await account.arkham_price.get_futures_price(coin)
+                price = price_data.get('price') if isinstance(price_data, dict) else None
+
+                if not price:
+                    console.print(f"[red]❌ Не удалось получить цену {coin}[/red]")
+                    continue
+
+                try:
+                    leverage = await ArkhamLeverage(account.session).check_leverage(
+                        coin.upper(), int(leverage_raw)
+                    )
+                except (TypeError, ValueError):
+                    console.print(f'[yellow]⚠️ Не удалось поставить плечо. Используем дефолтное - {config.DEFAULT_LEVERAGE}[/yellow]')
+                    leverage = config.DEFAULT_LEVERAGE
+
+                size = PositionSizer(
+                    account.balance,
+                    int(leverage),
+                    float(price),
+                    float(percent)
+                ).calculate_size()
+
+                if size <= 0:
+                    console.print(f"[red]❌ Размер позиции должен быть больше 0[/red]")
+                    continue
+
+                trader = ArkhamTrading(
+                    session=account.session,
+                    coin=coin,
+                    size=size,
+                    info_client=account.arkham_info
+                )
+
+                success = await (
+                    trader.futures_long_limit() if side == "long" else trader.futures_short_limit()
+                )
+
+                if success:
+                    console.print(f"[green]✅ {side.upper()} по {coin} открыт[/green]")
+
+                    await asyncio.sleep(delay)
+
+                    await close_all_positions(account)
+                    successful_orders += 1
+                    console.print(f"[green]✅ Все позиции закрыты, общее число позиций - {successful_orders}[/green]")
+
+                    await show_basic_account_info(account)
+                    await asyncio.sleep(delay)
+                else:
+                    console.print(f"[red]❌ Ошибка открытия позиции {coin}[/red]")
+
+            except Exception as e:
+                console.print(f"[red]❌ Ошибка в сделке: {str(e)}[/red]")
+                continue
+
+        return True
+
+    except Exception as e:
+        console.print(f"[red]❌ Критическая ошибка: {str(e)}[/red]")
+        raise
+
 async def open_position(account: Account, side: str):
     coin = str(await inquirer.text(message="Введите монету (например BTC):").execute_async())
 
