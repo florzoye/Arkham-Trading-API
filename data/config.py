@@ -11,7 +11,7 @@ COOKIE_FILE = "cookies.json"
 # =========================
 DB_NAME = 'trade.db' 
 TABLE_NAME = "accounts"
-DEFAULT_LEVERAGE = 10
+DEFAULT_LEVERAGE = int(10)
 NUMBER_ATTEMPTS_REQUESTS = 10 # можно не трогать
 # =========================
 #  Points
