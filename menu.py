@@ -47,19 +47,26 @@ def _normalize_proxy(raw: str) -> Optional[str]:
     raw = (raw or '').strip()
     if not raw:
         return None
-
     if '@' in raw:
         return raw
-
     parts = raw.split()
     if len(parts) == 2 and parts[0].startswith('http'):
         return f"{parts[0]}@{parts[1]}"
 
     if len(parts) == 2:
         return f"http://{parts[0]}@{parts[1]}"
-
     return raw
 
+def calculate_volume(
+        balance: int | float,
+        volume_point: int | float,
+        leverage: int,):
+    try:
+        max_volume_per_order = 2 * balance * leverage # открытие + закрытие
+        total_orders = volume_point // max_volume_per_order
+        return total_orders 
+    except Exception as e:
+        pass
 
 def db_row_to_account(row: dict) -> Account:
     """Преобразовать строку из БД в объект Account"""
@@ -386,6 +393,7 @@ async def futures_menu(account: Account):
                 "📋 Мои позиции",
                 "📈 Открыть LONG",
                 "📉 Открыть SHORT",
+                "⚒️ Открыть несколько позиций",
                 "❌ Закрыть все позиции",
                 "⬅️ Выйти",
             ],
@@ -401,6 +409,9 @@ async def futures_menu(account: Account):
 
             case "📉 Открыть SHORT":
                 await open_position(account, side="short")
+
+            case "⚒️ Открыть несколько позиций":
+                await dialog_window(account)
 
             case "❌ Закрыть все позиции":
                 await close_all_positions(account)
@@ -508,30 +519,6 @@ async def positions_and_balances_menu(account: Account):
         console.print(f"[red]❌ Ошибка в меню позиций: {e}[/red]")
         await asyncio.sleep(2)
     
-async def trading_dialog_window(account: Account):
-    while True:
-        choice = await inquirer.select(
-            choices=[
-                "Открыть одну сделку",
-                "Открыть несколько сделок",
-                "⬅️ Выйти",
-            ],
-                default="Открыть одну сделку"
-        ).execute_async()
-
-        match choice:
-            case "Открыть одну сделку":
-                await open_position(account)
-
-            case "Открыть несколько сделок":
-                await dialog_window(account)
-
-            case "📉 Продать монету":
-                await spot_sell_coin(account)
-
-            case "⬅️ Выйти":
-                break
-
 async def dialog_window(account: Account):
     try:
         while True:
@@ -540,9 +527,10 @@ async def dialog_window(account: Account):
                 choices=[
                     "По строгому количеству (задаете сами)",
                     "По остатку баланса (торгуется до заданого)",
+                    "Набить до определенного обьема",
                     "⬅️ Выйти",
                 ],
-                    default="По строгому количеству (задаете сами)"
+                default="По строгому количеству (задаете сами)"
             ).execute_async()
 
             match choice:
@@ -550,6 +538,8 @@ async def dialog_window(account: Account):
                     await multiple_orders(account)
                 case "По остатку баланса (торгуется до заданого)":
                     await remains_balance_orders(account)
+                case "Набить до определенного обьема":
+                    await volume_orders(account)
                 case "⬅️ Выйти":
                     break
     except Exception as e:
@@ -570,7 +560,6 @@ async def multiple_orders(account: Account):
         leverage_raw = await inquirer.number(
             message="Какое плечо использовать (1-20)?",
         ).execute_async()
-        leverage_raw = leverage_raw or config.DEFAULT_LEVERAGE
 
         successful_orders = 0
         
@@ -626,6 +615,7 @@ async def multiple_orders(account: Account):
                     
                     await close_all_positions(account)
                     console.print(f"[green]✅ Все позиции закрыты, прогресс - {n+1}/{n_orders}[/green]")
+                    await asyncio.sleep(delay)
                 else:
                     console.print(f"[red]❌ Ошибка открытия позиции {coin}[/red]")
 
@@ -633,8 +623,7 @@ async def multiple_orders(account: Account):
                 console.print(f"[red]❌ Ошибка в сделке {n+1}: {str(e)}[/red]")
                 continue
 
-        console.print(f"[green]🎯 Успешно завершено {successful_orders}/{n_orders} сделок[/green]")
-                
+        console.print(f"[green]🎯 Успешно завершено {successful_orders}/{n_orders} сделок[/green]")    
     except Exception as e:
         console.print(f"[red]❌ Критическая ошибка: {str(e)}[/red]")
         raise
