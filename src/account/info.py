@@ -80,6 +80,26 @@ class ArkhamInfo:
         except Exception as e:
             logger.error(f"Ошибка при получении данных ({action}): {e}")
             return None
+        
+    async def get_perp_volume(self):
+        try:
+            action = 'volume'
+            url = f"https://arkm.com/api/affiliate-dashboard/{'volume' if action == 'volume' else 'points'}-season-2"
+            async with self.session.get(url, headers=self.headers(action)) as response:
+                data = await response.json()
+
+                if action == "volume":
+                    spot = (data[0] if isinstance(data, list) else data).get("spotVolume", 0)
+                    perp = (data[0] if isinstance(data, list) else data).get("perpVolume", 0)
+                    return round(float(perp), 3)
+
+                elif action == "points":
+                    points = (data[0] if isinstance(data, list) else data).get("points", 0)
+                    return round(float(points), 3)
+
+        except Exception as e:
+            logger.error(f"Ошибка при получении данных ({action}): {e}")
+            return None
 
     async def get_fee_margin(self):
         try:
