@@ -90,3 +90,4 @@ typings/
 
 # Arkham session / cookies (если хочешь исключить)
 cookies.json
+version.txt
