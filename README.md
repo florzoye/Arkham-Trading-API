@@ -35,8 +35,8 @@
 
 ```bash
 # Клонирование репозитория
-git clone https://github.com/florzoye/ArkhamBot.git
-cd ArkhamBot
+git clone https://github.com/florzoye/Arkham-Trading-API.git
+cd Arkham-Trading-API
 
 # Запустите стартовое окно
 start.bat
