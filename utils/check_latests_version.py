@@ -102,7 +102,7 @@ async def compare_versions(
             f"⚠️ Update available!\n"
             f"📅 Latest update released: {formatted_date}\n"
             f"ℹ️ To update, use: git pull\n"
-            f"📥 Or download from: https://github.com/0xStarLabs/StarLabs-KiteAI",
+            f"📥 Or download from: https://github.com/florzoye/Arkham-Trading-API",
         )
 
     except Exception as e:

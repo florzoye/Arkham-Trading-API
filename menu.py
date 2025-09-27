@@ -4,6 +4,7 @@ import json
 import signal
 import random
 import asyncio
+import traceback
 from typing import Optional
 
 from colorama import init
@@ -26,6 +27,7 @@ from src.account.login import ArkhamLogin
 from src.trade.trading_client import ArkhamTrading
 from utils.leverage import ArkhamLeverage
 from utils.size_calc import PositionSizer
+from utils.check_latests_version import check_version
 
 from account import Account
 from data import config
@@ -1267,7 +1269,14 @@ async def main():
             "[yellow]Нажмите Ctrl+C для корректного завершения[/yellow]",
             title="Запуск системы"
         ))
-
+        try:
+            await check_version("florzoye", "Arkham-Trading-API")
+            pass
+        except Exception as e:
+            traceback.print_exc()
+            console.print(f"[red] Failed to check version: {e} [/red]")
+            console.print("[red] Continue with current version\n [/red]")
+                        
         db = AsyncDatabaseManager(config.DB_NAME)
 
         await create_table()
