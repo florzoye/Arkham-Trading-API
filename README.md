@@ -35,20 +35,8 @@
 
 ```bash
 # Клонирование репозитория
-git clone https://github.com/florzoye/ArkhamBot.git
-cd ArkhamBot
+git clone https://github.com/florzoye/Arkham-Trading-API.git
+cd Arkham-Trading-API
 
-# Виртуальное окружение
-python -m venv venv
-
-# Активация (Linux/Mac)
-source venv/bin/activate
-
-# Активация (Windows)
-\venv\Scripts\activate
-
-# Установка зависимостей
-pip install -r requirements.txt
-
-# Запуск торгового бота
-python menu.py 
+# Запустите стартовое окно
+start.bat
