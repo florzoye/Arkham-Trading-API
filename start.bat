@@ -14,6 +14,5 @@ echo Activating virtual environment...
 call venv\Scripts\activate.bat
 
 echo.
-echo Starting StarLabs KiteAI Bot...
 python menu.py
 pause
