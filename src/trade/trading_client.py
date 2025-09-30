@@ -121,6 +121,19 @@ class ArkhamTrading:
         action = f"Spot market BUY {self.coin} на {self.size} успешно выполнен!"
         return await self._send_order_request(order_data, action)
     
+    async def spot_buy_limit(self):
+        """Покупка на споте по лимиту"""
+        if not self.price:
+            raise ValueError("Цена обязательна для limit ордеров")
+            
+        order_data = self._create_order_data(
+            side="buy",
+            order_type="limit",
+            is_futures=False
+        )
+        action = f"Spot limit BUY {self.coin} на {self.size} успешно размещен!"
+        return await self._send_order_request(order_data, action)
+    
     async def spot_sell_market(self, sell_size: float = None):
         """
         Продажа на споте по рынку
@@ -144,6 +157,33 @@ class ArkhamTrading:
             custom_size=sell_size
         )
         action = f"Spot market SELL {self.coin} на {sell_size} успешно выполнен!"
+        return await self._send_order_request(order_data, action)
+    
+    async def spot_sell_limit(self, sell_size: float = None):
+        """
+        Продажа на споте по лимиту
+        Если sell_size не указан и есть info_client - автоматически определит баланс монеты
+        """
+        if not self.price:
+            raise ValueError("Цена обязательна для limit ордеров")
+            
+        if sell_size is None and self.info_client:
+            spot_balance = await self.info_client.get_spot_balance(self.coin)
+            if spot_balance <= 0:
+                logger.warning(f"Недостаточный баланс {self.coin} на споте для продажи: {spot_balance}")
+                return False
+            sell_size = spot_balance
+        else:
+            sell_size = sell_size if sell_size is not None else float(self.size)
+            
+        order_data = self._create_order_data(
+            side="sell",
+            order_type="limit",
+            is_futures=False,
+            use_custom_size=True,
+            custom_size=sell_size
+        )
+        action = f"Spot limit SELL {self.coin} на {sell_size} успешно размещен!"
         return await self._send_order_request(order_data, action)
   
     # === FUTURES ТОРГОВЛЯ С АВТОМАТИЧЕСКИМ ЗАКРЫТИЕМ ===
