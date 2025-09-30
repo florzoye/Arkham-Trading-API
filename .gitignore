@@ -88,7 +88,7 @@ typings/
 *.swp
 *.bak
 
-# Arkham session / cookies (если хочешь исключить)
+# Arkham session / cookies / files
 cookies.json
 version.txt
 test.py
