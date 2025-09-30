@@ -1160,6 +1160,93 @@ async def spot_volume_orders(account: Account):
         console.print(f"[red]❌ Критическая ошибка: {str(e)}[/red]")
         raise
 
+async def spot_multiple_orders(account: Account):
+    try:
+        console.print('[red]Монета и время сделки будут выбираться рандомно![/red]')
+
+        n_orders = await inquirer.number(
+            message="Сколько сделок вы желаете совершить?",
+        ).execute_async()
+
+        percent = await inquirer.number(
+            message="Какой процент от депозита использовать?",
+        ).execute_async()
+
+        successful_orders = 0
+
+        for n in range(int(n_orders)):
+            delay = random.randint(5, 35)
+            coin = random.choice(config.TOKENS_LIST)
+
+            try:
+                price_data = await account.arkham_price.get_spot_price(coin)
+                price = price_data.get('price') if isinstance(price_data, dict) else None
+
+                if not price:
+                    console.print(f"[red]❌ Не удалось получить цену {coin}[/red]")
+                    continue
+
+                size = PositionSizer(
+                    account.balance,
+                    1,  # без плеча
+                    float(price),
+                    float(percent)
+                ).calculate_size()
+
+                if size <= 0:
+                    console.print(f"[red]❌ Размер позиции должен быть больше 0[/red]")
+                    continue
+
+                trader = ArkhamTrading(
+                    session=account.session,
+                    coin=coin,
+                    size=size,
+                    info_client=account.arkham_info,
+                    price=float(price)
+                )
+
+                buy_success = await trader.spot_buy_limit()
+
+                if not buy_success:
+                    console.print(f"[red]❌ Ошибка BUY {coin}[/red]")
+                    action = await inquirer.number(
+                        message="Ошибка. Продолжить (0) или выйти (1)?",
+                    ).execute_async()
+                    if action == 1:
+                        break
+                    continue
+
+                console.print(f"[green]✅ BUY {coin} успешно![/green]")
+                await asyncio.sleep(delay)
+
+                spot_balance = await account.arkham_info.get_spot_coin(coin.upper())
+                sell_size = spot_balance.get("free", 0)
+
+                if sell_size <= 0:
+                    console.print(f"[red]❌ Нет баланса для SELL {coin}[/red]")
+                    continue
+
+                sell_success = await trader.spot_sell_limit(sell_size=sell_size)
+
+                if sell_success:
+                    console.print(f"[green]✅ SELL {coin} успешно![/green]")
+                    successful_orders += 1
+                else:
+                    console.print(f"[red]❌ Ошибка SELL {coin}[/red]")
+
+                console.print(f"[cyan]⌛ Задержка {delay} сек перед следующей сделкой[/cyan]")
+                await asyncio.sleep(delay)
+
+            except Exception as e:
+                console.print(f"[red]❌ Ошибка в сделке {n+1}: {str(e)}[/red]")
+                continue
+
+        console.print(f"[green]🎯 Успешно завершено {successful_orders}/{n_orders} сделок[/green]")
+
+    except Exception as e:
+        console.print(f"[red]❌ Критическая ошибка: {str(e)}[/red]")
+        raise
+
 # --- Работа с аккаунтами и БД ---
 async def clear_table_action():
     """Очистка таблицы с подтверждением"""
