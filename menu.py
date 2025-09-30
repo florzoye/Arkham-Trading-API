@@ -429,20 +429,28 @@ async def spot_menu(account: Account):
                 "📋 Баланс монет на споте",
                 "📈 Купить монету",
                 "📉 Продать монету",
+                "⚒️ Набить нужное количество обьема",
                 "⬅️ Выйти",
             ],
-                default="📋 Мои позиции"
+                default="📋 Баланс монет на споте"
         ).execute_async()
 
         match choice:
             case "📋 Баланс монет на споте":
+                await account.initialize_clients()
                 await spot_balance(account)
 
             case "📈 Купить монету":
+                await account.initialize_clients()
                 await spot_buy_coin(account)
 
             case "📉 Продать монету":
+                await account.initialize_clients()
                 await spot_sell_coin(account)
+            
+            case  "⚒️ Набить нужное количество обьема":
+                await account.initialize_clients()
+                await spot_dialog_window(account) 
 
             case "⬅️ Выйти":
                 break
@@ -547,6 +555,29 @@ async def dialog_window(account: Account):
     except Exception as e:
         raise ValueError(e)
 
+async def spot_dialog_window(account: Account):
+    try:
+        while True:
+            choice = await inquirer.select(
+                message='Как отсчитывать сделки?',
+                choices=[
+                    "По строгому количеству (задаете сами)",
+                    "Набить до определенного обьема",
+                    "⬅️ Выйти",
+                ],
+                default="По строгому количеству (задаете сами)"
+            ).execute_async()
+
+            match choice:
+                case "По строгому количеству (задаете сами)":
+                    await spot_multiple_orders(account)
+                case "Набить до определенного обьема":
+                    await spot_volume_orders(account)
+                case "⬅️ Выйти":
+                    break
+    except Exception as e:
+         raise ValueError(e)
+
 async def multiple_orders(account: Account):
     try:
         console.print('[red]Торговая пара, направление и время сделки будут выбираться рандомно![/red]')
@@ -631,6 +662,12 @@ async def multiple_orders(account: Account):
                     await asyncio.sleep(delay)
                 else:
                     console.print(f"[red]❌ Ошибка открытия позиции {coin}[/red]")
+                    action = await inquirer.number(
+                        message="Так как возникла ошибка, лучше проверьте все руками, прежде чем запускать снова, если хотите продолжить, введите 0, закончить 1",
+                    ).execute_async()
+                    if action == 1:
+                        break
+                    continue
 
             except Exception as e:
                 console.print(f"[red]❌ Ошибка в сделке {n+1}: {str(e)}[/red]")
@@ -732,7 +769,13 @@ async def remains_balance_orders(account: Account):
 
             except Exception as e:
                 console.print(f"[red]❌ Ошибка в сделке: {str(e)}[/red]")
+                action = await inquirer.number(
+                    message="Так как возникла ошибка, лучше проверьте все руками, прежде чем запускать снова, если хотите продолжить, введите 0, закончить 1",
+                ).execute_async()
+                if action == 1:
+                    break
                 continue
+                
         return True
 
     except Exception as e:
@@ -837,6 +880,13 @@ async def volume_orders(account: Account):
                 await asyncio.sleep(delay)
             else:
                 console.print(f"[red]❌ Ошибка открытия позиции {coin}[/red]")
+                action = await inquirer.number(
+                    message="Так как возникла ошибка, лучше проверьте все руками, прежде чем запускать снова, если хотите продолжить, введите 0, закончить 1",
+                ).execute_async()
+                if action == 1:
+                    break
+                continue
+
     except Exception as e:
         console.print(f"[red]❌ Критическая ошибка: {str(e)}[/red]")
         raise
@@ -970,7 +1020,7 @@ async def spot_buy_coin(account: Account):
         price=price,
         info_client=account.arkham_info
     )
-    success = await trader.spot_buy_market()  
+    success = await trader.spot_buy_limit()  
     if success:
         console.print(f"[green]✅ Монета '{coin.upper()}'' куплена на споте![/green]")
     else:
