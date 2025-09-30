@@ -605,11 +605,14 @@ async def multiple_orders(account: Account):
                     console.print(f"[red]❌ Размер позиции должен быть больше 0[/red]")
                     continue
 
+                price = float((await account.arkham_price.get_futures_price(coin.upper()))['price'])    
+                
                 trader = ArkhamTrading(
                     session=account.session,
                     coin=coin,
                     size=size,
-                    info_client=account.arkham_info
+                    info_client=account.arkham_info,
+                    price=price
                 )
 
                 if side == "long":
@@ -705,7 +708,8 @@ async def remains_balance_orders(account: Account):
                     session=account.session,
                     coin=coin,
                     size=size,
-                    info_client=account.arkham_info
+                    info_client=account.arkham_info,
+                    price=price
                 )
 
                 success = await (
@@ -811,7 +815,8 @@ async def volume_orders(account: Account):
                 session=account.session,
                 coin=coin,
                 size=size,
-                info_client=account.arkham_info
+                info_client=account.arkham_info,
+                price=float(price)
             )
 
             success = await (
@@ -883,17 +888,19 @@ async def open_position(account: Account, side: str):
         console.print(f"[red]❌ Размер позиции должен быть больше 0[/red]")
         return
 
+    price = (await account.arkham_price.get_futures_price(coin.upper()))['price']
     trader = ArkhamTrading(
         session=account.session,
         coin=coin,
         size=size,
-        info_client=account.arkham_info
+        info_client=account.arkham_info,
+        price=float(price)
     )
 
     if side == "long":
-        success = await trader.futures_long_market()
+        success = await trader.futures_long_limit()
     else:
-        success = await trader.futures_short_market()
+        success = await trader.futures_short_limit()
 
     if success:
         console.print(f"[green]✅ {side.upper()} по {coin} открыт[/green]")
